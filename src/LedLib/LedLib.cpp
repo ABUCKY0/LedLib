@@ -1,5 +1,5 @@
 #include "LedLib/LedLib.hpp"
-
+#include <float.h>
 using namespace LedLib;
 using namespace std;
 
@@ -413,23 +413,23 @@ namespace LedLib
         {
         case LEDOffsetRainbow:
             // Hardcoded value for initial offset hue
-            static double offsetHue = 0.0; // Static to retain value between calls
-
+            static double offsetHue = 9999999999999;
             // Calculate the hue range covered by the rainbow based on the number of divisions
             double hue_range = 360.0 / divisions;
 
             // Increment hue for each pixel using the static hue_step
-            for (int i = 0; i < size; ++i)
+            for (int i = size; i >= 0; --i)
             {
                 // Calculate the hue for this LED within the range covered by the rainbow
-                double hue = fmod((offsetHue + i * hue_step), hue_range) + (divisions * i * hue_step);
+                double hue = fmod((offsetHue + i * hue_step), 360.0);
                 RGB rgb = HSVtoRGB({hue, 1.0, 1.0});
                 setPixel(rgb, i);
             }
             strip.update();   // Update the LED strip
-            offsetHue += 2.0; // Increment offset hue, adjust as needed
+            offsetHue -= 2.0; // Increment offset hue, adjust as needed
             break;
             // Add cases for other LED modes if needed
         }
     }
+
 };

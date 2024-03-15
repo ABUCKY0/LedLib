@@ -228,5 +228,10 @@ namespace LedLib
          * @brief Update the built-in PROS ADILED buffer based on the selected LED mode.
          */
         void cycle();
+
+
+
+        /// Reactive Effects
+        /// 
     };
 }
