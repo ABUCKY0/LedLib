@@ -4,6 +4,13 @@
 
 namespace LedLib
 {
+    enum LEDMode {
+        LEDOff = 0,
+        LEDManual = 1, // When the user gets the buffer or when a pixel is manually set by the user.
+        LEDFullRainbow = 2, // When The Strip is set to be all one color rainbow
+        LEDOffsetRainbow = 3 // When each pixel is a slightly different color;
+
+    };
 
     class StripSizeTooLarge : public std::exception
     {
@@ -30,10 +37,13 @@ namespace LedLib
 
     class LedLib
     {
-
+    private:
+        double hue_step = 0; // Member variable to store hue step
+        int divisions = 0;
     public:
         int size;
         pros::ADILED strip;
+        enum LEDMode mode = LEDManual;
 
         /**
          * @brief Construct a new Led object
@@ -42,6 +52,7 @@ namespace LedLib
          *
          */
         LedLib();
+
         /**
          * @brief Construct a new Led object
          *
@@ -191,5 +202,31 @@ namespace LedLib
          * @return A uint32_t color
          */
         static uint32_t HSVtoUINT32(HSV hsv);
+
+        /// Specialty Functions
+
+        /**
+         * @brief Set the LED strip to display a rainbow effect.
+         */
+        void setRainbow();
+
+        /**
+         * @brief Set the LED strip to display a color-changing rainbow effect.
+         *
+         * @param delay_ms Delay in milliseconds between color changes.
+         */
+        void fullRainbow(int delay_ms);
+
+        /**
+         * @brief Set up the LED strip to display an offset rainbow effect.
+         *
+         * @param divisions Number of divisions to split the strip by.
+         */
+        void offsetRainbow(int divisions = 2);
+
+        /**
+         * @brief Update the built-in PROS ADILED buffer based on the selected LED mode.
+         */
+        void cycle();
     };
 }

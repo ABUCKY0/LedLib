@@ -228,54 +228,67 @@ namespace LedLib
      * @param hsv The HSV struct to convert from
      * @return A HSV struct
      */
-RGB LedLib::HSVtoRGB(HSV hsv) {
-    RGB rgb;
+    RGB LedLib::HSVtoRGB(HSV hsv)
+    {
+        RGB rgb;
 
-    if (hsv.saturation == 0) { // Black
-        rgb.red = 0;
-        rgb.green = 0;
-        rgb.blue = 0;
+        if (hsv.saturation == 0)
+        { // Black
+            rgb.red = 0;
+            rgb.green = 0;
+            rgb.blue = 0;
+            return rgb;
+        }
+
+        double c = hsv.value * hsv.saturation;
+        double x = c * (1 - fabs(fmod(hsv.hue / 60.0, 2) - 1));
+        double m = hsv.value - c;
+
+        double r, g, b;
+
+        if (hsv.hue >= 0 && hsv.hue < 60)
+        {
+            r = c;
+            g = x;
+            b = 0;
+        }
+        else if (hsv.hue >= 60 && hsv.hue < 120)
+        {
+            r = x;
+            g = c;
+            b = 0;
+        }
+        else if (hsv.hue >= 120 && hsv.hue < 180)
+        {
+            r = 0;
+            g = c;
+            b = x;
+        }
+        else if (hsv.hue >= 180 && hsv.hue < 240)
+        {
+            r = 0;
+            g = x;
+            b = c;
+        }
+        else if (hsv.hue >= 240 && hsv.hue < 300)
+        {
+            r = x;
+            g = 0;
+            b = c;
+        }
+        else
+        {
+            r = c;
+            g = 0;
+            b = x;
+        }
+
+        rgb.red = (r + m) * 255;
+        rgb.green = (g + m) * 255;
+        rgb.blue = (b + m) * 255;
+
         return rgb;
     }
-
-    double c = hsv.value * hsv.saturation;
-    double x = c * (1 - fabs(fmod(hsv.hue / 60.0, 2) - 1));
-    double m = hsv.value - c;
-
-    double r, g, b;
-
-    if (hsv.hue >= 0 && hsv.hue < 60) {
-        r = c;
-        g = x;
-        b = 0;
-    } else if (hsv.hue >= 60 && hsv.hue < 120) {
-        r = x;
-        g = c;
-        b = 0;
-    } else if (hsv.hue >= 120 && hsv.hue < 180) {
-        r = 0;
-        g = c;
-        b = x;
-    } else if (hsv.hue >= 180 && hsv.hue < 240) {
-        r = 0;
-        g = x;
-        b = c;
-    } else if (hsv.hue >= 240 && hsv.hue < 300) {
-        r = x;
-        g = 0;
-        b = c;
-    } else {
-        r = c;
-        g = 0;
-        b = x;
-    }
-
-    rgb.red = (r + m) * 255;
-    rgb.green = (g + m) * 255;
-    rgb.blue = (b + m) * 255;
-
-    return rgb;
-}
 
     /**
      * @brief uint32_t Color to RGB
@@ -322,5 +335,101 @@ RGB LedLib::HSVtoRGB(HSV hsv) {
     uint32_t LedLib::HSVtoUINT32(HSV hsv)
     {
         return RGBtoUINT32(HSVtoRGB(hsv));
+    }
+
+    /// Specialty Functions:
+
+    /**
+     * @brief Set the LED strip to display a rainbow effect.
+     */
+    void LedLib::setRainbow()
+    {
+        int num_leds = this->size;
+        double hue_step = 360.0 / num_leds;
+
+        for (int i = 0; i < num_leds; ++i)
+        {
+            // Calculate the hue for this LED
+            double hue = i * hue_step;
+            // Convert hue to RGB color
+            RGB rgb = HSVtoRGB({hue, 1.0, 1.0});
+            // Set the pixel color
+            setPixel(rgb, i);
+        }
+    };
+
+    /**
+     * @brief Set the LED strip to display a color-changing rainbow effect.
+     *
+     * @param delay_ms Delay in milliseconds between color changes.
+     */
+
+    // void LedLib::fullRainbow(int delay_ms)
+    // {
+    //     pros::Task rainbow_task([this, delay_ms]()
+    //                             {
+    //             int num_leds = size;
+    //             double hue_step = 360.0 / num_leds;
+
+    //             while (true) {
+    //                 for (int i = 0; i < num_leds; ++i) {
+    //                     // Calculate the hue for this LED
+    //                     double hue = i * hue_step;
+    //                     // Convert hue to RGB color
+    //                     RGB rgb = HSVtoRGB({hue, 1.0, 1.0});
+    //                     // Set the pixel color
+    //                     setAll(rgb);
+    //                     // Delay before updating to the next color
+    //                     pros::delay(delay_ms);
+    //                 }
+    //             } });
+    // }
+
+    /**
+     * @brief Set up the LED strip to display an offset rainbow effect.
+     *
+     * @param divisions Number of divisions to split the strip by.
+     */
+    void LedLib::offsetRainbow(int divisions)
+    {
+        this->divisions = divisions;
+        // Calculate hue step based on the number of LEDs and divisions
+        hue_step = 360.0 / (size * divisions);
+
+        for (int i = 0; i < size; ++i)
+        {
+            // Calculate the hue for each LED based on the offset and divisions
+            double hue_offset = (i / (double)(size)) * 360.0 / divisions;
+            RGB rgb = HSVtoRGB({fmod(hue_offset, 360.0), 1.0, 1.0});
+            setPixel(rgb, i);
+        }
+
+        mode = LEDOffsetRainbow;
+    }
+
+    void LedLib::cycle()
+    {
+        switch (mode)
+        {
+        case LEDOffsetRainbow:
+            // Hardcoded value for initial offset hue
+            static double offsetHue = 0.0; // Static to retain value between calls
+
+            // Calculate the hue range covered by the rainbow based on the number of divisions
+            double hue_range = 360.0 / divisions;
+
+            // Increment hue for each pixel using the static hue_step
+            for (int i = 0; i < size; ++i)
+            {
+                // Calculate the hue for this LED within the range covered by the rainbow
+                double hue = fmod((offsetHue + i * hue_step), hue_range) + (divisions * i * hue_step);
+                RGB rgb = HSVtoRGB({hue, 1.0, 1.0});
+                setPixel(rgb, i);
+            }
+            strip.update();   // Update the LED strip
+            offsetHue += 2.0; // Increment offset hue, adjust as needed
+            break;
+            // Add cases for other LED modes if needed
+        }
     }
 };

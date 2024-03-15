@@ -6,15 +6,14 @@ using namespace std;
 
 LedLib::LedLib strip(14, 1, 58);
 
-
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
-void initialize() {
-
+void initialize()
+{
 }
 
 /**
@@ -61,23 +60,27 @@ void autonomous() {}
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-void opcontrol() {
+void opcontrol()
+{
     HSV color;
     color.saturation = 1;
     color.value = 1;
     color.hue = 0; // Start with hue = 0 (red)
-    
-    while (true) {
-        // Increment the hue value
-        color.hue += .05; // You can adjust the increment value to change the speed of color change
-		if (color.hue > 255) {
-			color.hue = 0;
-		}
-        
-        // Set all LEDs to the current color
-        strip.setAll(color);
-        
+
+    // while (true) {
+    //     // Increment the hue value
+    //     color.hue += .05; // You can adjust the increment value to change the speed of color change
+    // 	if (color.hue > 255) {
+    // 		color.hue = 0;
+    // 	}
+
+    // Set all LEDs to the current color
+    // strip.setAll(color);
+    strip.offsetRainbow(3);
+    while (true)
+    {
+        strip.cycle();
         // Delay to control the speed of color change
-        delay(10); // Adjust the delay value as needed
+        delay(10); 
     }
 }
