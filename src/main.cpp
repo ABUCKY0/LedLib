@@ -1,9 +1,12 @@
 #include "main.h"
 #include "LedLib/LedLib.hpp"
+#include "LedLib/effects/RainbowEffect.hpp"
 using namespace LedLib;
 using namespace pros;
 using namespace std;
 
+LedLib::LedLib strip(14, 1, 58);
+RainbowEffect rainbow;
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -70,9 +73,12 @@ void opcontrol()
 
     // Set all LEDs to the current color
     // strip.setAll(color);
+
+    strip.setActiveEffect(strip.addEffect(new RainbowEffect));
     while (true)
     {
         // Delay to control the speed of color change
+        strip.updateEffects();
         delay(10); 
     }
 }
