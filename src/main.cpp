@@ -4,7 +4,6 @@ using namespace LedLib;
 using namespace pros;
 using namespace std;
 
-LedLib::LedLib strip(14, 1, 58);
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -62,11 +61,6 @@ void autonomous() {}
  */
 void opcontrol()
 {
-    HSV color;
-    color.saturation = 1;
-    color.value = 1;
-    color.hue = 0; // Start with hue = 0 (red)
-
     // while (true) {
     //     // Increment the hue value
     //     color.hue += .05; // You can adjust the increment value to change the speed of color change
@@ -76,10 +70,8 @@ void opcontrol()
 
     // Set all LEDs to the current color
     // strip.setAll(color);
-    strip.offsetRainbow(3);
     while (true)
     {
-        strip.cycle();
         // Delay to control the speed of color change
         delay(10); 
     }
