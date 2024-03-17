@@ -6,9 +6,9 @@ namespace LedLib
 {
     struct RGB
     {
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
+        int red;
+        int green;
+        int blue;
     };
 
     struct HSV
@@ -110,8 +110,10 @@ namespace LedLib
          *
          * @note Credits to https://gist.github.com/peacefixation/5eeb6e992a012ea2f42cd5419df65ea7
          */
-        static uint32_t lerpRGB(RGB color1, RGB color2, double scale);
+        static RGB lerpRGB(RGB color1, RGB color2, double scale);
 
+
+        static HSV lerpHSV(HSV color1, HSV color2, double scale);
         /**
          * @brief Converts RGB to HSV
          *
