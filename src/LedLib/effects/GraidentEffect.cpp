@@ -2,6 +2,7 @@
 #include "LedLib/effects/GraidentEffect.hpp"
 #include "LedLib/LedLib.hpp"
 #include "main.h"
+using namespace std;
 namespace LedLib
 {
     GraidentEffect::GraidentEffect(RGB start, RGB end)
@@ -43,6 +44,10 @@ namespace LedLib
             //HSV lerped = LedLib::lerpHSV(startColor, endColor, scale);
             //std::cout << "LERPED: H" << lerped.hue << " S" << lerped.saturation << " V" << lerped.value << "\n";
             // RGB interpolatedColor = LedLib::HSVtoRGB(lerped);
+            RGB startColor2 = LedLib::HSVtoRGB(startColor);
+            RGB endColor2 = LedLib::HSVtoRGB(endColor);
+            cout << " R" << startColor2.red << " G" << startColor2.green << " B"<< startColor2.blue;
+            cout << " R" << endColor2.red << " G" << endColor2.green << " B"<< endColor2.blue << endl;
             RGB interpolatedColor = LedLib::lerpRGB(LedLib::HSVtoRGB(startColor), LedLib::HSVtoRGB(endColor), scale);
             std::cout << "CONVERT: R" << interpolatedColor.red << " G" << interpolatedColor.green << " B" << interpolatedColor.blue << "\n";
 

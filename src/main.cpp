@@ -70,7 +70,7 @@ void opcontrol()
     RGB color1;
     color1.red = 255;
     RGB color2;
-    color2.blue = 255;
+    color2.blue = 240;
     cout << "Check";
     GraidentEffect graident(color1, color2);
 

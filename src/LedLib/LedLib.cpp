@@ -143,9 +143,9 @@ namespace LedLib
     RGB LedLib::lerpRGB(RGB color1, RGB color2, double scale)
     {
         RGB lerpedColor;
-        lerpedColor.red = color1.red + static_cast<uint8_t>((color2.red - color1.red) * scale);
-        lerpedColor.green = color1.green + static_cast<uint8_t>((color2.green - color1.green) * scale);
-        lerpedColor.blue = color1.blue + static_cast<uint8_t>((color2.blue - color1.blue) * scale);
+        lerpedColor.red = static_cast<uint8_t>(color1.red * (1.0 - scale) + color2.red * scale);
+        lerpedColor.green = static_cast<uint8_t>(color1.green * (1.0 - scale) + color2.green * scale);
+        lerpedColor.blue = static_cast<uint8_t>(color1.blue * (1.0 - scale) + color2.blue * scale);
         return lerpedColor;
     }
     HSV LedLib::lerpHSV(HSV color1, HSV color2, double scale)
@@ -279,11 +279,6 @@ namespace LedLib
         result.red = static_cast<int>(r * 255);
         result.green = static_cast<int>(g * 255);
         result.blue = static_cast<int>(b * 255);
-
-        // Debug print
-        std::cout << "HSV: (" << hsv.hue << ", " << hsv.saturation << ", " << hsv.value << ")\n";
-        std::cout << "RGB: (" << result.red << ", " << result.green << ", " << result.blue << ")\n";
-
         return result;
     }
 
@@ -320,10 +315,22 @@ namespace LedLib
      */
     uint32_t LedLib::RGBtoUINT32(RGB rgb)
     {
-        if (rgb.red > 255) {rgb.red = 255; std::cout << "R>255";}
-        if (rgb.green > 255) {rgb.green = 255; std::cout << "G>255";}
-        if (rgb.blue > 255) {rgb.blue = 255; std::cout << "B>255";}
-        
+        if (rgb.red > 255)
+        {
+            rgb.red = 255;
+            std::cout << "R>255";
+        }
+        if (rgb.green > 255)
+        {
+            rgb.green = 255;
+            std::cout << "G>255";
+        }
+        if (rgb.blue > 255)
+        {
+            rgb.blue = 255;
+            std::cout << "B>255";
+        }
+
         return ((uint8_t)rgb.red << 16) | ((uint8_t)rgb.green << 8) | (uint8_t)rgb.blue;
     }
 
