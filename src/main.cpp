@@ -77,15 +77,15 @@ void opcontrol()
     RainbowEffect rainbow;
 
     cout << "Check";
-    cout << strip.addEffect(&rainbow);
-    strip.addEffect(&graident);
+    strip.addEffect(&rainbow);
+    //strip.addEffect(&graident);
 
-    strip.setActiveEffect(1);
+    strip.setActiveEffect(0);
     while (true)
     {
         // Delay to control the speed of color change
         strip.updateEffects();
-        delay(10); 
+        delay(15); 
         //pros::delay(50);
     }
 }

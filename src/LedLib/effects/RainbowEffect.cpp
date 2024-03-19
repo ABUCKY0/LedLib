@@ -28,10 +28,10 @@ namespace LedLib {
             {
                 // Calculate the hue for this LED within the range covered by the rainbow
                 double hue = fmod((offsetHue + i * 2.0), 360.0);
-                RGB rgb = ledLib.HSVtoRGB({hue, 1.0, 1.0});
+                RGB rgb = LedLib::HSVtoRGB({hue, 100, 100});
                 ledLib.setPixel(rgb, i);
             }
             ledLib.strip.update();   // Update the LED strip
             offsetHue -= 2.0; // Increment offset hue, adjust as needed
-    }
+    };
 }
