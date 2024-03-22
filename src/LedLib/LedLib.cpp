@@ -288,10 +288,37 @@ namespace LedLib
      * @param color the Color to Convert
      */
     RGB LedLib::UINT32toRGB(uint32_t color)
-    {
+    {   
+        /*
+         * Bits are stored 0xRRGGBB
+         * Aka, 0xFF = 1111 1111
+         * So, The full binary is RRRR RRRR GGGG GGGG BBBB BBBB
+         * 
+         * To get the Red, we need to remove the GGGG GGGG BBBB BBBB
+         * Then resulting from that operation, you get 0000 0000 0000 0000 RRRR RRRR
+         * use Binary AND to ignore the 0 bits and get the RRRR RRRR
+         *
+         * Repeat above but shift Green 8 bits to the right, then AND with 0xFF to ignore RRRR RRRR
+         * 0000 0000 RRRR RRRR GGGG GGGG
+         *
+         * Repeat above but since no shifting is required, just AND with 0xFF to Ignore RRRR RRRR GGGG GGGG
+         *
+         * 0xFF
+         */
         RGB rgb;
-        rgb.red = (color >> 16) & 0xFF;
+        // To get the Red, we need to remove the GGGG GGGG BBBB BBBB
+        // Then resulting from that operation, you get 0000 0000 0000 0000 RRRR RRRR
+        // use Binary AND to ignore the 0 bits and get the RRRR RRRR (Technically, we don't need to do the AND operation, but it's good practice to do so.)
+        rgb.red = (color >> 16) & 0xFF; 
+
+
+        // To get the Green, we need to remove the BBBB BBBB with BIT shifting
+        // RRRR RRRR GGGG GGGG BBBB BBBB >> 8 = 0000 0000 RRRR RRRR GGGG GGGG
+        // Binary AND with 0xFF to ignore the RRRR RRRR bits and get only the GGGG GGGG (Here we do, because otherwise we'd get RRRR RRRR and GGGG GGGG, which is a no-no)
         rgb.green = (color >> 8) & 0xFF;
+        
+        // Since Blue is at the rightmost side, we can just ignore RED and GREEN. 
+        // Binary AND with 0xFF to ignore the RRRR RRRR and GGGG GGGG bits and get only the BBBB BBBB
         rgb.blue = color & 0xFF;
 
         return rgb;
@@ -318,19 +345,20 @@ namespace LedLib
         if (rgb.red > 255)
         {
             rgb.red = 255;
-            std::cout << "R>255";
+            std::cout << "[DEBUG FA/CLRCHK] R>255";
         }
         if (rgb.green > 255)
         {
             rgb.green = 255;
-            std::cout << "G>255";
+            std::cout << "[DEBUG FA/CLRCHK] G>255";
         }
         if (rgb.blue > 255)
         {
             rgb.blue = 255;
-            std::cout << "B>255";
+            std::cout << "[DEBUG FA/CLRCHK] B>255";
         }
-
+        // Shifts Red 16 bits to the right, Green 8 bits to the right, and Blue 0 bits to the right
+        // Then adds them together
         return ((uint8_t)rgb.red << 16) | ((uint8_t)rgb.green << 8) | (uint8_t)rgb.blue;
     }
 
