@@ -1,5 +1,7 @@
 #include "main.h"
 #include "LedLib/LedLib.hpp"
+#include "LedLib/effects/RainbowEffect.hpp"
+#include "LedLib/effects/GraidentEffect.hpp"
 using namespace LedLib;
 using namespace pros;
 using namespace std;
@@ -14,6 +16,7 @@ LedLib::LedLib strip(14, 1, 58);
  */
 void initialize()
 {
+
 }
 
 /**
@@ -62,25 +65,27 @@ void autonomous() {}
  */
 void opcontrol()
 {
-    HSV color;
-    color.saturation = 1;
-    color.value = 1;
-    color.hue = 0; // Start with hue = 0 (red)
 
-    // while (true) {
-    //     // Increment the hue value
-    //     color.hue += .05; // You can adjust the increment value to change the speed of color change
-    // 	if (color.hue > 255) {
-    // 		color.hue = 0;
-    // 	}
+    cout << "Check";
+    RGB color1;
+    color1.red = 255;
+    RGB color2;
+    color2.blue = 240;
+    cout << "Check";
+    GraidentEffect graident(color1, color2);
 
-    // Set all LEDs to the current color
-    // strip.setAll(color);
-    strip.offsetRainbow(3);
+    RainbowEffect rainbow;
+
+    cout << "Check";
+    strip.addEffect(&rainbow);
+    //strip.addEffect(&graident);
+
+    strip.setActiveEffect(0);
     while (true)
     {
-        strip.cycle();
         // Delay to control the speed of color change
-        delay(10); 
+        strip.updateEffects();
+        delay(15); 
+        //pros::delay(50);
     }
 }

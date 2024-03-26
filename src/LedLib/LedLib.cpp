@@ -1,8 +1,4 @@
-#include "LedLib/LedLib.hpp"
-#include <float.h>
-using namespace LedLib;
-using namespace std;
-
+#include "LedLib.hpp"
 namespace LedLib
 {
     /**
@@ -16,7 +12,7 @@ namespace LedLib
     LedLib::LedLib(uint8_t adiport, int length)
         : size(length), strip(adiport, length)
     {
-        // Constructor body (if any)
+        this->activeEffect = -1;
     }
 
     /**
@@ -30,8 +26,9 @@ namespace LedLib
      */
     LedLib::LedLib(uint8_t smartport, uint8_t adiport, int length) : strip({smartport, adiport}, length)
     {
-        this->strip = pros::ADILed({smartport, adiport}, length);
+        // this->strip = pros::ADILed({smartport, adiport}, length);
         this->size = length;
+        this->activeEffect = -1;
     }
 
     /**
@@ -114,66 +111,50 @@ namespace LedLib
         this->strip.set_pixel(HSVtoUINT32(hsv), index);
     }
 
-    /**
-     * @brief Sets the entire RGB strip to a specified Graident
-     *
-     * @param colora Color Represented as a 6 digit hex code (0xFF00FF)
-     * @param colorb Color Represented as a 6 digit hex code (0xFF00FF)
-     *
-     * @note Converts RGB to uint32_t then calls setGraident(uint32_t, uint32_t) for simplicity
-     */
-    void LedLib::setGraident(uint32_t colora, uint32_t colorb)
+    void LedLib::setActiveEffect(int active)
     {
+        this->activeEffect = active;
     }
 
-    /**
-     * @brief Sets the entire RGB strip to a specified Graident
-     *
-     * @param colora Color Represented as an HSV struct
-     * @param colorb Color Represented as an HSV struct
-     *
-     * @note Converts RGB to uint32_t then calls setGraident(uint32_t, uint32_t) for simplicity
-     */
-    void LedLib::setGraident(HSV colora, HSV colorb)
+    int LedLib::addEffect(LedEffect *customEffect)
     {
+        this->effects.push_back(customEffect);
+        return effects.size() - 1;
     }
 
-    /**
-     * @brief Sets the entire RGB strip to a specified Graident
-     *
-     * @param colora Color Represented as an RGB struct
-     * @param colorb Color Represented as an RGB struct
-     *
-     * @note Converts RGB to uint32_t then calls setGraident(uint32_t, uint32_t) for simplicity
-     */
-    void LedLib::setGraident(RGB colora, RGB colorb)
+    void LedLib::updateEffects()
     {
+        if (this->activeEffect < 0)
+            return;
+        if (effects.size() <= 0)
+            return;
+        LedEffect *effect = this->effects[this->activeEffect];
+        effect->update(*this);
+        return;
     }
 
     /// Static Functions
 
     /**
-     * @brief
+     * @brief Lerps in RGB
      *
      * @note Credits to https://gist.github.com/peacefixation/5eeb6e992a012ea2f42cd5419df65ea7
      */
-    uint32_t LedLib::lerpRGB(RGB color1, RGB color2, double scale)
+    RGB LedLib::lerpRGB(RGB color1, RGB color2, double scale)
     {
-        if (scale > 1)
-        {
-            scale = 1;
-        }
-        else if (scale < 0)
-        {
-            scale = 0;
-        }
-        RGB lerped;
-
-        lerped.red = color1.red + static_cast<uint8_t>((color2.red - color1.red) * scale);
-        lerped.green = color1.green + static_cast<uint8_t>((color2.green - color1.green) * scale);
-        lerped.blue = color1.blue + static_cast<uint8_t>((color2.blue - color1.blue) * scale);
-
-        return RGBtoUINT32(lerped);
+        RGB lerpedColor;
+        lerpedColor.red = static_cast<uint8_t>(color1.red * (1.0 - scale) + color2.red * scale);
+        lerpedColor.green = static_cast<uint8_t>(color1.green * (1.0 - scale) + color2.green * scale);
+        lerpedColor.blue = static_cast<uint8_t>(color1.blue * (1.0 - scale) + color2.blue * scale);
+        return lerpedColor;
+    }
+    HSV LedLib::lerpHSV(HSV color1, HSV color2, double scale)
+    {
+        HSV interpolatedColor;
+        interpolatedColor.hue = color1.hue + (color2.hue - color1.hue) * scale;
+        interpolatedColor.saturation = color1.saturation + (color2.saturation - color1.saturation) * scale;
+        interpolatedColor.value = color1.value + (color2.value - color1.value) * scale;
+        return interpolatedColor;
     }
 
     /**
@@ -192,31 +173,40 @@ namespace LedLib
         double g = rgb.green / 255.0;
         double b = rgb.blue / 255.0;
 
-        double cmax = std::max(r, std::max(g, b));
-        double cmin = std::min(r, std::min(g, b));
-        double diff = cmax - cmin;
-        double h = -1;
-        double s = -1;
+        // h, s, v = hue, saturation, value
+        double cmax = std::max(r, std::max(g, b)); // maximum of r, g, b
+        double cmin = std::min(r, std::min(g, b)); // minimum of r, g, b
+        double diff = cmax - cmin;                 // diff of cmax and cmin.
+        double h = -1, s = -1;
 
+        // if cmax and cmax are equal then h = 0
         if (cmax == cmin)
             h = 0;
+
+        // if cmax equal r then compute h
         else if (cmax == r)
             h = fmod(60 * ((g - b) / diff) + 360, 360);
+
+        // if cmax equal g then compute h
         else if (cmax == g)
             h = fmod(60 * ((b - r) / diff) + 120, 360);
+
+        // if cmax equal b then compute h
         else if (cmax == b)
             h = fmod(60 * ((r - g) / diff) + 240, 360);
 
+        // if cmax equal zero
         if (cmax == 0)
             s = 0;
         else
-            s = (diff / cmax) * 255.0;
+            s = (diff / cmax) * 100;
 
-        double v = cmax * 255.0;
+        // compute v
+        double v = cmax * 100;
 
-        hsv.hue = static_cast<uint16_t>(h);
-        hsv.saturation = static_cast<uint8_t>(s);
-        hsv.value = static_cast<uint8_t>(v);
+        hsv.hue = h;
+        hsv.saturation = s;
+        hsv.value = v;
 
         return hsv;
     }
@@ -230,64 +220,66 @@ namespace LedLib
      */
     RGB LedLib::HSVtoRGB(HSV hsv)
     {
-        RGB rgb;
+        double h = hsv.hue;                // 0-360
+        double s = hsv.saturation / 100.0; // 0-100 mapping to 0-1
+        double v = hsv.value / 100.0;      // 0-100 mapping to 0-1
 
-        if (hsv.saturation == 0)
-        { // Black
-            rgb.red = 0;
-            rgb.green = 0;
-            rgb.blue = 0;
-            return rgb;
-        }
+        // Normalize hue to [0, 360]
+        h = std::fmod(h, 360.0);
+        if (h < 0)
+            h += 360.0;
 
-        double c = hsv.value * hsv.saturation;
-        double x = c * (1 - fabs(fmod(hsv.hue / 60.0, 2) - 1));
-        double m = hsv.value - c;
+        int hi = static_cast<int>(std::floor(h / 60.0)) % 6;
+        double f = (h / 60.0) - static_cast<int>(h / 60.0);
+        double p = v * (1.0 - s);
+        double q = v * (1.0 - f * s);
+        double t = v * (1.0 - (1.0 - f) * s);
 
         double r, g, b;
 
-        if (hsv.hue >= 0 && hsv.hue < 60)
+        switch (hi)
         {
-            r = c;
-            g = x;
-            b = 0;
-        }
-        else if (hsv.hue >= 60 && hsv.hue < 120)
-        {
-            r = x;
-            g = c;
-            b = 0;
-        }
-        else if (hsv.hue >= 120 && hsv.hue < 180)
-        {
-            r = 0;
-            g = c;
-            b = x;
-        }
-        else if (hsv.hue >= 180 && hsv.hue < 240)
-        {
-            r = 0;
-            g = x;
-            b = c;
-        }
-        else if (hsv.hue >= 240 && hsv.hue < 300)
-        {
-            r = x;
-            g = 0;
-            b = c;
-        }
-        else
-        {
-            r = c;
-            g = 0;
-            b = x;
+        case 0:
+            r = v;
+            g = t;
+            b = p;
+            break;
+        case 1:
+            r = q;
+            g = v;
+            b = p;
+            break;
+        case 2:
+            r = p;
+            g = v;
+            b = t;
+            break;
+        case 3:
+            r = p;
+            g = q;
+            b = v;
+            break;
+        case 4:
+            r = t;
+            g = p;
+            b = v;
+            break;
+        case 5:
+            r = v;
+            g = p;
+            b = q;
+            break;
+        default:
+            r = g = b = 0.0;
+            break;
         }
 
-        rgb.red = (r + m) * 255;
-        rgb.green = (g + m) * 255;
-        rgb.blue = (b + m) * 255;
-
-        return rgb;
+        // Scale to [0, 255] and convert to int
+        RGB result;
+        result.red = static_cast<int>(r * 255);
+        result.green = static_cast<int>(g * 255);
+        result.blue = static_cast<int>(b * 255);
+        return result;
     }
 
     /**
@@ -296,10 +288,37 @@ namespace LedLib
      * @param color the Color to Convert
      */
     RGB LedLib::UINT32toRGB(uint32_t color)
-    {
+    {   
+        /*
+         * Bits are stored 0xRRGGBB
+         * Aka, 0xFF = 1111 1111
+         * So, The full binary is RRRR RRRR GGGG GGGG BBBB BBBB
+         * 
+         * To get the Red, we need to remove the GGGG GGGG BBBB BBBB
+         * Then resulting from that operation, you get 0000 0000 0000 0000 RRRR RRRR
+         * use Binary AND to ignore the 0 bits and get the RRRR RRRR
+         *
+         * Repeat above but shift Green 8 bits to the right, then AND with 0xFF to ignore RRRR RRRR
+         * 0000 0000 RRRR RRRR GGGG GGGG
+         *
+         * Repeat above but since no shifting is required, just AND with 0xFF to Ignore RRRR RRRR GGGG GGGG
+         *
+         * 0xFF
+         */
         RGB rgb;
-        rgb.red = (color >> 16) & 0xFF;
+        // To get the Red, we need to remove the GGGG GGGG BBBB BBBB
+        // Then resulting from that operation, you get 0000 0000 0000 0000 RRRR RRRR
+        // use Binary AND to ignore the 0 bits and get the RRRR RRRR (Technically, we don't need to do the AND operation, but it's good practice to do so.)
+        rgb.red = (color >> 16) & 0xFF; 
+
+
+        // To get the Green, we need to remove the BBBB BBBB with BIT shifting
+        // RRRR RRRR GGGG GGGG BBBB BBBB >> 8 = 0000 0000 RRRR RRRR GGGG GGGG
+        // Binary AND with 0xFF to ignore the RRRR RRRR bits and get only the GGGG GGGG (Here we do, because otherwise we'd get RRRR RRRR and GGGG GGGG, which is a no-no)
         rgb.green = (color >> 8) & 0xFF;
+        
+        // Since Blue is at the rightmost side, we can just ignore RED and GREEN. 
+        // Binary AND with 0xFF to ignore the RRRR RRRR and GGGG GGGG bits and get only the BBBB BBBB
         rgb.blue = color & 0xFF;
 
         return rgb;
@@ -323,7 +342,24 @@ namespace LedLib
      */
     uint32_t LedLib::RGBtoUINT32(RGB rgb)
     {
-        return ((uint32_t)rgb.red << 16) | ((uint32_t)rgb.green << 8) | rgb.blue;
+        if (rgb.red > 255)
+        {
+            rgb.red = 255;
+            std::cout << "[DEBUG FA/CLRCHK] R>255";
+        }
+        if (rgb.green > 255)
+        {
+            rgb.green = 255;
+            std::cout << "[DEBUG FA/CLRCHK] G>255";
+        }
+        if (rgb.blue > 255)
+        {
+            rgb.blue = 255;
+            std::cout << "[DEBUG FA/CLRCHK] B>255";
+        }
+        // Shifts Red 16 bits to the right, Green 8 bits to the right, and Blue 0 bits to the right
+        // Then adds them together
+        return ((uint8_t)rgb.red << 16) | ((uint8_t)rgb.green << 8) | (uint8_t)rgb.blue;
     }
 
     /**
@@ -337,99 +373,4 @@ namespace LedLib
         return RGBtoUINT32(HSVtoRGB(hsv));
     }
 
-    /// Specialty Functions:
-
-    /**
-     * @brief Set the LED strip to display a rainbow effect.
-     */
-    void LedLib::setRainbow()
-    {
-        int num_leds = this->size;
-        double hue_step = 360.0 / num_leds;
-
-        for (int i = 0; i < num_leds; ++i)
-        {
-            // Calculate the hue for this LED
-            double hue = i * hue_step;
-            // Convert hue to RGB color
-            RGB rgb = HSVtoRGB({hue, 1.0, 1.0});
-            // Set the pixel color
-            setPixel(rgb, i);
-        }
-    };
-
-    /**
-     * @brief Set the LED strip to display a color-changing rainbow effect.
-     *
-     * @param delay_ms Delay in milliseconds between color changes.
-     */
-
-    // void LedLib::fullRainbow(int delay_ms)
-    // {
-    //     pros::Task rainbow_task([this, delay_ms]()
-    //                             {
-    //             int num_leds = size;
-    //             double hue_step = 360.0 / num_leds;
-
-    //             while (true) {
-    //                 for (int i = 0; i < num_leds; ++i) {
-    //                     // Calculate the hue for this LED
-    //                     double hue = i * hue_step;
-    //                     // Convert hue to RGB color
-    //                     RGB rgb = HSVtoRGB({hue, 1.0, 1.0});
-    //                     // Set the pixel color
-    //                     setAll(rgb);
-    //                     // Delay before updating to the next color
-    //                     pros::delay(delay_ms);
-    //                 }
-    //             } });
-    // }
-
-    /**
-     * @brief Set up the LED strip to display an offset rainbow effect.
-     *
-     * @param divisions Number of divisions to split the strip by.
-     */
-    void LedLib::offsetRainbow(int divisions)
-    {
-        this->divisions = divisions;
-        // Calculate hue step based on the number of LEDs and divisions
-        hue_step = 360.0 / (size * divisions);
-
-        for (int i = 0; i < size; ++i)
-        {
-            // Calculate the hue for each LED based on the offset and divisions
-            double hue_offset = (i / (double)(size)) * 360.0 / divisions;
-            RGB rgb = HSVtoRGB({fmod(hue_offset, 360.0), 1.0, 1.0});
-            setPixel(rgb, i);
-        }
-
-        mode = LEDOffsetRainbow;
-    }
-
-    void LedLib::cycle()
-    {
-        switch (mode)
-        {
-        case LEDOffsetRainbow:
-            // Hardcoded value for initial offset hue
-            static double offsetHue = 9999999999999;
-            // Calculate the hue range covered by the rainbow based on the number of divisions
-            double hue_range = 360.0 / divisions;
-
-            // Increment hue for each pixel using the static hue_step
-            for (int i = size; i >= 0; --i)
-            {
-                // Calculate the hue for this LED within the range covered by the rainbow
-                double hue = fmod((offsetHue + i * hue_step), 360.0);
-                RGB rgb = HSVtoRGB({hue, 1.0, 1.0});
-                setPixel(rgb, i);
-            }
-            strip.update();   // Update the LED strip
-            offsetHue -= 2.0; // Increment offset hue, adjust as needed
-            break;
-            // Add cases for other LED modes if needed
-        }
-    }
-
-};
+}

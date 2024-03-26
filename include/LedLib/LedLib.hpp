@@ -1,31 +1,14 @@
 #pragma once
-
+#include <vector>
+#include "effects/LedEffect.hpp"
 #include "main.h"
-
 namespace LedLib
 {
-    enum LEDMode {
-        LEDOff = 0,
-        LEDManual = 1, // When the user gets the buffer or when a pixel is manually set by the user.
-        LEDFullRainbow = 2, // When The Strip is set to be all one color rainbow
-        LEDOffsetRainbow = 3 // When each pixel is a slightly different color;
-
-    };
-
-    class StripSizeTooLarge : public std::exception
-    {
-    public:
-        char *what()
-        {
-            return "Strip Size is outside specified range 1-64";
-        }
-    };
-
     struct RGB
     {
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
+        int red;
+        int green;
+        int blue;
     };
 
     struct HSV
@@ -34,16 +17,14 @@ namespace LedLib
         double saturation = 0;
         double value = 0;
     };
-
     class LedLib
     {
-    private:
-        double hue_step = 0; // Member variable to store hue step
-        int divisions = 0;
     public:
-        int size;
         pros::ADILED strip;
-        enum LEDMode mode = LEDManual;
+        int addEffect(LedEffect *customEffect);
+        void updateEffects();
+        void setActiveEffect(int active);
+        int size;
 
         /**
          * @brief Construct a new Led object
@@ -122,30 +103,6 @@ namespace LedLib
          */
         void setPixel(HSV hsv, uint8_t index);
 
-        /**
-         * @brief Sets the entire RGB strip to a specified Graident
-         *
-         * @param colora Color Represented as a 6 digit hex code (0xFF00FF)
-         * @param colorb Color Represented as a 6 digit hex code (0xFF00FF)
-         */
-        void setGraident(uint32_t colora, uint32_t colorb);
-
-        /**
-         * @brief Sets the entire RGB strip to a specified Graident
-         *
-         * @param colora Color Represented as an HSV struct
-         * @param colorb Color Represented as an HSV struct
-         */
-        void setGraident(HSV colora, HSV colorb);
-
-        /**
-         * @brief Sets the entire RGB strip to a specified Graident
-         *
-         * @param colora Color Represented as an RGB struct
-         * @param colorb Color Represented as an RGB struct
-         */
-        void setGraident(RGB colora, RGB colorb);
-
         /// Static Functions
 
         /**
@@ -153,8 +110,10 @@ namespace LedLib
          *
          * @note Credits to https://gist.github.com/peacefixation/5eeb6e992a012ea2f42cd5419df65ea7
          */
-        static uint32_t lerpRGB(RGB color1, RGB color2, double scale);
+        static RGB lerpRGB(RGB color1, RGB color2, double scale);
 
+
+        static HSV lerpHSV(HSV color1, HSV color2, double scale);
         /**
          * @brief Converts RGB to HSV
          *
@@ -203,35 +162,8 @@ namespace LedLib
          */
         static uint32_t HSVtoUINT32(HSV hsv);
 
-        /// Specialty Functions
-
-        /**
-         * @brief Set the LED strip to display a rainbow effect.
-         */
-        void setRainbow();
-
-        /**
-         * @brief Set the LED strip to display a color-changing rainbow effect.
-         *
-         * @param delay_ms Delay in milliseconds between color changes.
-         */
-        void fullRainbow(int delay_ms);
-
-        /**
-         * @brief Set up the LED strip to display an offset rainbow effect.
-         *
-         * @param divisions Number of divisions to split the strip by.
-         */
-        void offsetRainbow(int divisions = 2);
-
-        /**
-         * @brief Update the built-in PROS ADILED buffer based on the selected LED mode.
-         */
-        void cycle();
-
-
-
-        /// Reactive Effects
-        /// 
+        
+        std::vector<LedEffect *> effects;
+        int activeEffect;
     };
-}
+};
