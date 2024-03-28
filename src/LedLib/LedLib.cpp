@@ -143,11 +143,21 @@ namespace LedLib
     RGB LedLib::lerpRGB(RGB color1, RGB color2, double scale)
     {
         RGB lerpedColor;
-        lerpedColor.red = static_cast<uint8_t>(color1.red * (1.0 - scale) + color2.red * scale);
-        lerpedColor.green = static_cast<uint8_t>(color1.green * (1.0 - scale) + color2.green * scale);
-        lerpedColor.blue = static_cast<uint8_t>(color1.blue * (1.0 - scale) + color2.blue * scale);
+        lerpedColor.red = color1.red * (1.0 - scale) + color2.red * scale;
+        lerpedColor.green = color1.green * (1.0 - scale) + color2.green * scale;
+        lerpedColor.blue = color1.blue * (1.0 - scale) + color2.blue * scale;
         return lerpedColor;
     }
+
+    /**
+     * @brief Interpolate 2 HSV values based on a given scale.
+     * 
+     * @param color1 The first color to interpolate from
+     * @param color2 The second color to interpolate to
+     * @param scale The scale to interpolate by (0.0 - 1.0)
+     * 
+     * @return A HSV struct
+    */
     HSV LedLib::lerpHSV(HSV color1, HSV color2, double scale)
     {
         HSV interpolatedColor;
