@@ -33,4 +33,4 @@ jobs:
       - name: Run linters
         uses: wearerequired/lint-action@v2
         with: 
-          clang-format: true
+          clang_format: true
