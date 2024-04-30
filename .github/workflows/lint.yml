@@ -35,4 +35,4 @@ jobs:
         with: 
           clang_format: true
           style: "google"
-          ignore: "*firmware*"
+          ignore: "*firmware*, *display*, *okapi*, *pros*"
